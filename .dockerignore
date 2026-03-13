@@ -1,0 +1,19 @@
+# Don't send these to the Docker daemon
+__pycache__/
+*.pyc
+.pytest_cache/
+tests/
+venv/
+env/
+.venv/
+.env
+*.csv
+*.xlsx
+*.xls
+.git/
+.gitignore
+.vscode/
+.idea/
+README.md
+Dockerfile
+.dockerignore

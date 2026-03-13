@@ -1,0 +1,69 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# .gitignore — Data Diagnostic Dashboard
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ── Python bytecode & caches ─────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# ── pytest ───────────────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── Virtual environments ─────────────────────────────────────────────────────
+venv/
+env/
+.venv/
+.env/
+ENV/
+
+# ── Environment variables / secrets ──────────────────────────────────────────
+.env
+*.env
+.env.*
+
+# ── Data files (prevent uploading test datasets) ─────────────────────────────
+*.csv
+*.xlsx
+*.xls
+*.parquet
+*.feather
+*.h5
+*.hdf5
+*.json
+*.sqlite
+*.db
+
+# ── IDE & editor folders ─────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# ── OS-generated files ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Distribution / packaging ────────────────────────────────────────────────
+dist/
+build/
+*.egg-info/
+*.egg
+*.whl
+
+# ── Streamlit ────────────────────────────────────────────────────────────────
+.streamlit/secrets.toml
+
+# ── Jupyter Notebooks (optional checkpoints) ────────────────────────────────
+.ipynb_checkpoints/
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
