@@ -265,6 +265,110 @@ with health_tab3:
 st.markdown('<hr class="soft-divider">', unsafe_allow_html=True)
 
 # ──────────────────────────────────────────────────────────────────────────────
+# BODY — Data Explorer & Anomaly Detector
+# ──────────────────────────────────────────────────────────────────────────────
+
+st.markdown("### 📊 Data Explorer & Anomaly Detector")
+
+eda_col1, eda_col2 = st.columns(2)
+
+# ── Feature A: Column Dropper ─────────────────────────────────────────────
+with eda_col1:
+    st.markdown(
+        '<p class="section-header">🗑️ Column Dropper</p>',
+        unsafe_allow_html=True,
+    )
+    st.caption("Select columns you want to permanently remove before cleaning.")
+    columns_to_drop = st.multiselect(
+        "Columns to drop",
+        options=list(df.columns),
+        default=[],
+        help="These columns will be removed when you click the Clean button.",
+    )
+
+# ── Feature B: Anomaly Visualizer ─────────────────────────────────────────
+with eda_col2:
+    st.markdown(
+        '<p class="section-header">🔴 Anomaly Visualizer</p>',
+        unsafe_allow_html=True,
+    )
+    st.caption("Pick a numeric column to see outliers highlighted in red.")
+
+    eda_numeric_cols = df.select_dtypes(include="number").columns.tolist()
+
+    if eda_numeric_cols:
+        import altair as alt
+
+        eda_selected = st.selectbox(
+            "Select a numeric column",
+            options=eda_numeric_cols,
+            index=0,
+            key="eda_anomaly_select",
+            help="Values below the 1st or above the 99th percentile are flagged.",
+        )
+
+        if eda_selected:
+            col_series = df[eda_selected].dropna().reset_index(drop=True)
+            p01 = col_series.quantile(0.01)
+            p99 = col_series.quantile(0.99)
+
+            chart_df = pd.DataFrame({
+                "Row Index": range(len(col_series)),
+                eda_selected: col_series.values,
+                "Status": [
+                    "Outlier" if v < p01 or v > p99 else "Normal"
+                    for v in col_series.values
+                ],
+            })
+
+            color_scale = alt.Scale(
+                domain=["Normal", "Outlier"],
+                range=["#6c63ff", "#ff4d4f"],
+            )
+
+            scatter = (
+                alt.Chart(chart_df)
+                .mark_circle(size=50, opacity=0.8)
+                .encode(
+                    x=alt.X("Row Index:Q"),
+                    y=alt.Y(f"{eda_selected}:Q"),
+                    color=alt.Color(
+                        "Status:N",
+                        scale=color_scale,
+                        legend=alt.Legend(title="Point Status"),
+                    ),
+                    tooltip=["Row Index", eda_selected, "Status"],
+                )
+                .properties(height=320)
+                .configure_view(strokeWidth=0)
+                .configure(
+                    background="rgba(0,0,0,0)",
+                    axis=alt.AxisConfig(
+                        gridColor="rgba(255,255,255,0.05)",
+                        labelColor="#a0a0b8",
+                        titleColor="#c4c4e0",
+                    ),
+                    legend=alt.LegendConfig(
+                        labelColor="#a0a0b8",
+                        titleColor="#c4c4e0",
+                    ),
+                )
+                .interactive()
+            )
+
+            st.altair_chart(scatter, use_container_width=True)
+
+            n_outliers_vis = (chart_df["Status"] == "Outlier").sum()
+            st.caption(
+                f"**{n_outliers_vis}** outlier(s) detected "
+                f"(below P1 = {p01:,.2f} or above P99 = {p99:,.2f})."
+            )
+    else:
+        st.info("ℹ️ No numeric columns available for anomaly visualisation.")
+
+st.markdown('<hr class="soft-divider">', unsafe_allow_html=True)
+
+# ──────────────────────────────────────────────────────────────────────────────
 # BODY — Automated Data Cleaning
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -282,7 +386,7 @@ st.markdown(
 )
 
 if st.button("🧼 Clean & Download Data", type="primary", use_container_width=True):
-    cleaned_df, clean_stats = clean_dataframe(df)
+    cleaned_df, clean_stats = clean_dataframe(df, columns_to_drop=columns_to_drop)
 
     # ── Summary of actions ────────────────────────────────────────────────
     act1, act2, act3, act4, act5 = st.columns(5)

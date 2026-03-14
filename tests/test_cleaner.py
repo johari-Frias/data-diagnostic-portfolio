@@ -167,3 +167,41 @@ class TestCleanDataframe:
 
         assert df["age"].max() == original_max
 
+    # ── User-specified column-drop tests ──────────────────────────────────
+
+    def test_drops_user_specified_columns(self, dirty_dataframe: pd.DataFrame) -> None:
+        """Passing columns_to_drop removes those columns from the output."""
+        cleaned, stats = clean_dataframe(dirty_dataframe, columns_to_drop=["score"])
+        assert "score" not in cleaned.columns
+        # 1 user-specified + 1 fully-empty ("empty_col") = 2
+        assert stats["columns_dropped"] == 2
+
+    def test_drops_user_and_empty_columns(self, dirty_dataframe: pd.DataFrame) -> None:
+        """User-specified drops and fully-empty drops are accumulated."""
+        cleaned, stats = clean_dataframe(
+            dirty_dataframe, columns_to_drop=["name", "city"]
+        )
+        # 2 user-specified + 1 fully-empty = 3
+        assert "name" not in cleaned.columns
+        assert "city" not in cleaned.columns
+        assert "empty_col" not in cleaned.columns
+        assert stats["columns_dropped"] == 3
+
+    def test_ignores_nonexistent_columns(self, dirty_dataframe: pd.DataFrame) -> None:
+        """Columns not present in the DataFrame are silently ignored."""
+        cleaned, stats = clean_dataframe(
+            dirty_dataframe, columns_to_drop=["does_not_exist"]
+        )
+        # Only the fully-empty column should be counted
+        assert stats["columns_dropped"] == 1
+
+    def test_default_columns_to_drop_empty(self, dirty_dataframe: pd.DataFrame) -> None:
+        """Calling without columns_to_drop works exactly as before."""
+        cleaned_default, stats_default = clean_dataframe(dirty_dataframe)
+        cleaned_none, stats_none = clean_dataframe(dirty_dataframe, columns_to_drop=None)
+        cleaned_empty, stats_empty = clean_dataframe(dirty_dataframe, columns_to_drop=[])
+
+        assert list(cleaned_default.columns) == list(cleaned_none.columns)
+        assert list(cleaned_default.columns) == list(cleaned_empty.columns)
+        assert stats_default == stats_none == stats_empty
+

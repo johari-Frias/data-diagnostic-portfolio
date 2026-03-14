@@ -10,15 +10,21 @@ This module has **zero** UI-framework dependencies.
 
 from __future__ import annotations
 
-from typing import Dict, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 
 
-def clean_dataframe(df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[str, int]]:
+def clean_dataframe(
+    df: pd.DataFrame,
+    columns_to_drop: Optional[List[str]] = None,
+) -> Tuple[pd.DataFrame, Dict[str, int]]:
     """Apply automated cleaning to a DataFrame.
 
     Cleaning steps (in order):
+        0. **Drop user-specified columns** — remove any columns listed in
+           *columns_to_drop*.  Names that do not exist in the DataFrame are
+           silently ignored.
         1. **Drop fully-empty columns** — any column where every value is null.
         2. **Fill numeric nulls** — replace ``NaN`` in numeric columns with
            the column median.
@@ -34,6 +40,9 @@ def clean_dataframe(df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[str, int]]:
     df : pd.DataFrame
         The raw DataFrame to clean.  This is **not** modified; a copy is
         used internally.
+    columns_to_drop : list[str] | None, optional
+        Column names the user wants removed before any other cleaning takes
+        place.  Defaults to ``None`` (no columns dropped).
 
     Returns
     -------
@@ -70,13 +79,20 @@ def clean_dataframe(df: pd.DataFrame) -> Tuple[pd.DataFrame, Dict[str, int]]:
         "outliers_capped": 0,
     }
 
+    # ── Step 0: Drop user-specified columns ───────────────────────────────
+    if columns_to_drop:
+        existing = [c for c in columns_to_drop if c in cleaned.columns]
+        if existing:
+            cleaned.drop(columns=existing, inplace=True)
+            stats["columns_dropped"] += len(existing)
+
     # ── Step 1: Drop columns that are 100 % empty ─────────────────────────
     all_null_cols = [
         col for col in cleaned.columns if cleaned[col].isnull().all()
     ]
     if all_null_cols:
         cleaned.drop(columns=all_null_cols, inplace=True)
-        stats["columns_dropped"] = len(all_null_cols)
+        stats["columns_dropped"] += len(all_null_cols)
 
     # ── Step 2: Fill missing numeric values with column median ────────────
     numeric_cols = cleaned.select_dtypes(include="number").columns
