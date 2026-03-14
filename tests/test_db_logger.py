@@ -16,18 +16,14 @@ import pytest
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Helpers — mock st.secrets so db_logger can import cleanly
+# Helpers — set DATABASE_URL env var so db_logger can resolve it
 # ──────────────────────────────────────────────────────────────────────────────
 
 
 @pytest.fixture(autouse=True)
-def _mock_streamlit(monkeypatch):
-    """Replace ``st.secrets`` and ``st.warning`` with safe mocks."""
-    import streamlit as st
-
-    mock_secrets = {"DATABASE_URL": "postgresql://user:pass@localhost:5432/testdb"}
-    monkeypatch.setattr(st, "secrets", mock_secrets)
-    monkeypatch.setattr(st, "warning", MagicMock())
+def _mock_env(monkeypatch):
+    """Inject a fake ``DATABASE_URL`` environment variable for every test."""
+    monkeypatch.setenv("DATABASE_URL", "postgresql://user:pass@localhost:5432/testdb")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -132,12 +128,11 @@ class TestGetConnection:
             sslmode="require",
         )
 
-    def test_returns_none_when_secret_missing(self, monkeypatch) -> None:
-        """Should return None when DATABASE_URL is not in st.secrets."""
-        import streamlit as st
+    def test_returns_none_when_env_var_missing(self, monkeypatch) -> None:
+        """Should return None when DATABASE_URL is not in the environment."""
         from src.db_logger import get_connection
 
-        monkeypatch.setattr(st, "secrets", {})  # no DATABASE_URL key
+        monkeypatch.delenv("DATABASE_URL", raising=False)
 
         conn = get_connection()
 

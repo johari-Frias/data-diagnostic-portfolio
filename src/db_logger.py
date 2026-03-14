@@ -2,7 +2,8 @@
 db_logger.py – PostgreSQL usage-logging backend for the Data Diagnostic Dashboard.
 
 Logs each successful CSV upload to a cloud PostgreSQL database (Neon / Supabase).
-The database URL is read from Streamlit's secrets management system.
+The database URL is read from the ``DATABASE_URL`` OS environment variable,
+making it compatible with Render, Railway, Heroku, Docker, and similar platforms.
 
 Usage::
 
@@ -19,10 +20,10 @@ Usage::
 from __future__ import annotations
 
 import logging
+import os
 from typing import Optional
 
 import psycopg2
-import streamlit as st
 
 logger = logging.getLogger(__name__)
 
@@ -31,23 +32,22 @@ logger = logging.getLogger(__name__)
 # ──────────────────────────────────────────────────────────────────────────────
 
 def get_connection() -> Optional[psycopg2.extensions.connection]:
-    """Open a PostgreSQL connection using the URL stored in ``st.secrets``.
+    """Open a PostgreSQL connection using the ``DATABASE_URL`` env var.
 
-    The secret key must be ``DATABASE_URL`` and should follow the format::
+    The variable should follow the format::
 
         postgresql://user:password@host:port/dbname?sslmode=require
 
     Returns
     -------
     psycopg2.extensions.connection or None
-        A live database connection, or ``None`` if the secret is missing
+        A live database connection, or ``None`` if the variable is missing
         or the connection attempt fails.
     """
-    try:
-        database_url: str = st.secrets["DATABASE_URL"]
-    except (KeyError, FileNotFoundError):
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
         logger.warning(
-            "DATABASE_URL not found in st.secrets — database logging is disabled."
+            "DATABASE_URL not set in environment — database logging is disabled."
         )
         return None
 
@@ -109,10 +109,6 @@ def log_upload(
         return True
     except Exception as exc:  # noqa: BLE001
         logger.error("Failed to log upload to database: %s", exc)
-        st.warning(
-            "⚠️ Database logging failed — your analysis is unaffected. "
-            f"Error: {exc}"
-        )
         return False
     finally:
         conn.close()
