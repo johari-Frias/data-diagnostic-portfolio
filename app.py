@@ -11,6 +11,8 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
+from src.cleaner import clean_dataframe
+from src.db_logger import log_upload
 from src.ingestion import load_data
 from src.profiler import DataProfiler
 from src.stats import detect_outliers_iqr
@@ -161,6 +163,14 @@ duplicate_count: int = profiler.get_duplicate_count()
 missing_summary: pd.DataFrame = profiler.get_missing_summary()
 type_suggestions: list = profiler.get_type_suggestions()
 
+# ── Log this upload to the cloud database ─────────────────────────────────
+log_upload(
+    file_name=uploaded_file.name,
+    total_rows=len(df),
+    total_columns=len(df.columns),
+    missing_values_count=int(missing_summary["missing_count"].sum()),
+)
+
 # ──────────────────────────────────────────────────────────────────────────────
 # TOP BAND — high-level KPIs
 # ──────────────────────────────────────────────────────────────────────────────
@@ -251,6 +261,51 @@ with health_tab2:
 # ── Tab 3: Data Preview ─────────────────────────────────────────────────
 with health_tab3:
     st.dataframe(df, use_container_width=True, height=400)
+
+st.markdown('<hr class="soft-divider">', unsafe_allow_html=True)
+
+# ──────────────────────────────────────────────────────────────────────────────
+# BODY — Automated Data Cleaning
+# ──────────────────────────────────────────────────────────────────────────────
+
+st.markdown(
+    '<p class="section-header">🧹 Automated Data Cleaning</p>',
+    unsafe_allow_html=True,
+)
+st.markdown(
+    "<p style='color:#888; font-size:0.9rem; margin-bottom:16px;'>"
+    "Drop 100% empty columns · fill numeric nulls with the median · "
+    "fill text nulls with the mode · remove duplicate rows · "
+    "cap outliers at the 1st/99th percentile."
+    "</p>",
+    unsafe_allow_html=True,
+)
+
+if st.button("🧼 Clean & Download Data", type="primary", use_container_width=True):
+    cleaned_df, clean_stats = clean_dataframe(df)
+
+    # ── Summary of actions ────────────────────────────────────────────────
+    act1, act2, act3, act4, act5 = st.columns(5)
+    act1.metric("Columns Dropped", clean_stats["columns_dropped"])
+    act2.metric("Numeric Fills", clean_stats["numeric_fills"])
+    act3.metric("Categorical Fills", clean_stats["categorical_fills"])
+    act4.metric("Duplicates Removed", clean_stats["duplicates_removed"])
+    act5.metric("Outliers Capped", clean_stats["outliers_capped"])
+
+    st.success(
+        f"✅ Cleaning complete — the result has "
+        f"**{len(cleaned_df):,}** rows × **{len(cleaned_df.columns):,}** columns."
+    )
+
+    # ── Offer CSV download ────────────────────────────────────────────────
+    csv_bytes = cleaned_df.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        label="⬇️ Download cleaned_data.csv",
+        data=csv_bytes,
+        file_name="cleaned_data.csv",
+        mime="text/csv",
+        use_container_width=True,
+    )
 
 st.markdown('<hr class="soft-divider">', unsafe_allow_html=True)
 
