@@ -1,107 +1,35 @@
-# 🩺 Data Diagnostic Dashboard
+# 🛠️ Universal Data Diagnostic & Auto-Cleaning Pipeline
 
-**Instantly profile, diagnose, and visualise data-quality issues in any CSV or Excel file — no code required.**
+[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.x-FF4B4B.svg)](https://streamlit.io/)
+[![Pandas](https://img.shields.io/badge/Pandas-Data_Manipulation-150458.svg)](https://pandas.pydata.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E.svg)](https://supabase.com/)
+[![Render](https://img.shields.io/badge/Deployed_on-Render-46E3B7.svg)](https://render.com/)
 
-Upload a dataset and get an automated health report covering missing values, duplicate rows, dtype mismatches, and statistical outliers, all rendered as interactive Plotly charts inside a sleek Streamlit interface.
+**Live Application:** [Click here to view the live app on Render](https://data-diagnostic-portfolio.onrender.com)
 
----
+## 📖 Overview
+As businesses ingest increasingly massive amounts of data, dirty datasets (missing values, extreme outliers, duplicates) bottleneck critical analytics. This project is a robust, interactive web application designed to automate the initial stages of the ETL (Extract, Transform, Load) pipeline. 
 
-## 📌 The Problem
+It allows non-technical stakeholders to upload raw CSV files, visually explore statistical anomalies, dynamically drop unneeded features, and download a mathematically cleaned, production-ready dataset in seconds. Under the hood, the app securely logs usage telemetry to a cloud PostgreSQL database.
 
-> Data analysts spend up to **60 % of their time** cleaning and profiling messy spreadsheets before any real analysis can begin. Manual inspection doesn't scale, and errors slip through when the dataset grows past a few thousand rows.
+## ✨ Key Features
+* **Automated Data Cleaning Pipeline:** Dynamically handles missing values, drops exact duplicate rows, and mathematically caps extreme numeric outliers at the 1st and 99th percentiles.
+* **Interactive EDA & Anomaly Detection:** Features a dynamic UI with Altair scatter charts that automatically detect and highlight statistical outliers (anomalies) in red before the data is cleaned.
+* **Dynamic Feature Selection:** Users can interactively drop unnecessary columns prior to the cleaning execution.
+* **Cloud Telemetry & Logging:** Securely and silently logs usage statistics (file size, rows, columns, missing values count) to a Supabase PostgreSQL database using environment variables and connection pooling.
+* **Test-Driven Development (TDD):** Backed by a robust suite of 17 passing `pytest` unit tests ensuring the cleaning logic and database connection degrades gracefully.
 
-## 💡 The Solution
+## 🏗️ Technical Architecture
+* **Frontend:** Streamlit, Altair (Data Visualization)
+* **Backend Data Processing:** Python, Pandas, NumPy
+* **Testing:** Pytest, Monkeypatch (Environment Mocking)
+* **Cloud Database:** Supabase (PostgreSQL with Connection Pooling)
+* **Deployment & CI/CD:** Render, GitHub
 
-The **Data Diagnostic Dashboard** automates the entire profiling phase. Drop in a `.csv` or `.xlsx` file and the app instantly surfaces:
+## 🚀 How to Run Locally
 
-- How many rows and columns you're working with.
-- Exactly which columns contain missing values — and what percentage is null.
-- How many exact duplicate rows exist.
-- Which string columns secretly hold dates, booleans, or numbers that should be re-typed.
-- Which numeric columns contain statistical outliers (IQR method) — with an interactive box plot to confirm.
-
----
-
-## ✨ Features
-
-| Feature | Description |
-|---|---|
-| **📂 Smart Ingestion** | Handles `.csv` (with automatic encoding fallback) and `.xlsx` files. Cached via `@st.cache_data`. |
-| **🧬 Missing Value Profiling** | Per-column null count and percentage, sorted by severity. |
-| **🔁 Duplicate Detection** | Exact duplicate-row count surfaced as a top-level KPI. |
-| **🔮 Automated Type Inference** | Detects date-like strings, boolean-like values, numeric strings, and low-cardinality categoricals — then suggests optimal Pandas dtypes. |
-| **📈 IQR Outlier Detection** | Flags values outside the 1.5 × IQR fence for every numeric column. |
-| **📊 Interactive Plotly Visuals** | Select any numeric column and render a live box plot to visually confirm outliers. |
-
----
-
-## 🏗️ Architecture & Tech Stack
-
-```
-DataAppProject/
-├── app.py               ← Streamlit UI (frontend view layer)
-├── requirements.txt
-├── .gitignore
-├── src/                  ← Backend logic (strictly decoupled from UI)
-│   ├── ingestion.py      ·  File upload, parsing, caching
-│   ├── profiler.py       ·  DataProfiler class (missing vals, dupes, types)
-│   └── stats.py          ·  IQR outlier detection
-└── tests/
-    └── test_backend.py   ← 23 pytest unit tests
-```
-
-**Design principle:** The `src/` backend is **100 % UI-agnostic** — every function and class returns plain Python data structures (DataFrames, dicts, ints). The `app.py` frontend simply consumes these outputs and renders them. This separation makes the backend independently testable and reusable outside Streamlit.
-
-| Layer | Technology |
-|---|---|
-| **Language** | Python 3.12 |
-| **Frontend** | Streamlit |
-| **Visualisation** | Plotly Express |
-| **Data Processing** | Pandas, NumPy |
-| **Testing** | Pytest |
-
----
-
-## 🚀 Quick Start
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/<your-username>/DataAppProject.git
-cd DataAppProject
-
-# 2. Create & activate a virtual environment (recommended)
-python -m venv venv
-# Windows
-venv\Scripts\activate
-# macOS / Linux
-source venv/bin/activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Launch the dashboard
-streamlit run app.py
-```
-
-The app will open automatically at **http://localhost:8501**. Upload any `.csv` or `.xlsx` file via the sidebar to begin.
-
----
-
-## 🧪 Testing
-
-The project includes a comprehensive test suite covering both `DataProfiler` and `detect_outliers_iqr`.
-
-```bash
-# Run the full suite
-python -m pytest tests/test_backend.py -v
-```
-
-```
-============================= 23 passed in 2.32s ==============================
-```
-
----
-
-## 📄 License
-
-This project is open-source and available under the [MIT License](LICENSE).
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/johari-Frias/data-diagnostic-portfolio.git](https://github.com/johari-Frias/data-diagnostic-portfolio.git)
+   cd data-diagnostic-portfolio
