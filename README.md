@@ -62,11 +62,3 @@ This tool bridges the gap between raw data extraction and analytical modeling. B
 
 
 ***
-
-### The Final Push
-Once you have pasted this into your `README.md` and added your live Render link, do your final push to GitHub:
-
-```bash
-git add README.md
-git commit -m "docs: updated README with project architecture and live link"
-git push origin main
