@@ -27,6 +27,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # ── Copy application code ───────────────────────────────────────────────────
 COPY app.py .
 COPY src/ ./src/
+COPY sample_ecommerce_data.csv .
 
 # ── Expose the default Streamlit port ────────────────────────────────────────
 EXPOSE 8501
