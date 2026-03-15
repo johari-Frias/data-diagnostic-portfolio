@@ -17,3 +17,4 @@ env/
 README.md
 Dockerfile
 .dockerignore
+!sample_ecommerce_data.csv
